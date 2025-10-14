@@ -1,0 +1,8 @@
+{
+  "name": "Travel planner",
+  "description": "An application that suggests travel itineraries based on budget, destination, or desired period. It provides detailed plans including accommodation, activities, and local tips.",
+  "requestFramePermissions": [
+    "geolocation"
+  ],
+  "prompt": ""
+}
