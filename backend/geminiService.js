@@ -73,6 +73,12 @@ function getUserInfoText(criteria) {
 // Copie as funções buildBuilderPrompt, buildBudgetPrompt, buildSurpriseMePrompt, e buildDefaultPrompt aqui...
 
 function buildPrompt(criteria) {
+    // Dentro do buildBuilderPrompt:
+const destinationsPrompt = criteria.destinationsOrder && criteria.destinationsOrder.length > 1
+    ? `- **Destinos e Ordem:** Siga OBRIGATORIAMENTE esta ordem: **${criteria.destinationsOrder.join(' -> ')}**. O nome geral da viagem (destinationName) deve refletir isso, ex: "Explorando a Rota X".`
+    : `- **Destino Principal:** ${criteria.destination}. Se não especificado, escolha um destino com base no local de partida e transporte.`;
+// ...
+const dateRules = `- **Período:** De ${criteria.startDate || "data de hoje + 15 dias"} a ${criteria.endDate || "data de início + 5 dias"}. Se as datas forem inválidas ou não especificadas, gere datas realistas.`
     if (criteria.multipleDestinations) {
         // return buildBuilderPrompt(criteria); // Supondo que você copiou
     }
