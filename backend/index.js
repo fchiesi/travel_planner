@@ -2,7 +2,7 @@ const express = require('express');
 const cors = require('cors');
 require('dotenv').config(); 
 const axios = require('axios');
-const { generateTripPlans } = require('./geminiService.js');
+const { generateTripPlans, analyzeFare } = require('./geminiService.js');
 
 const app = express();
 // NOTE: Use a port different from your frontend. 3001 is a common choice.
@@ -51,14 +51,27 @@ app.post('/api/trip-suggestions', async (req, res) => {
     }
   }
 });
-    res.json(mockTripPlans);
 
+
+// Analise de uma tarifa colada pelo usuario (custo real, taxas, risco).
+// Nao busca preco: so analisa o texto que o usuario trouxe.
+const MAX_FARE_TEXT = 8000;
+app.post('/api/fare-analysis', async (req, res) => {
+  const { fareText, travelers, route } = req.body || {};
+  if (typeof fareText !== 'string' || fareText.trim().length < 20) {
+    return res.status(400).json({ message: 'Cole o texto da tarifa (preço, bagagem e regras) para analisar.' });
+  }
+  if (fareText.length > MAX_FARE_TEXT) {
+    return res.status(400).json({ message: `Texto muito longo (máximo ${MAX_FARE_TEXT} caracteres). Cole só a tarifa e as regras.` });
+  }
+  try {
+    const analysis = await analyzeFare({ fareText: fareText.trim(), travelers, route });
+    res.json(analysis);
   } catch (error) {
-    console.error('Erro no endpoint /api/trip-suggestions:', error);
-    res.status(500).json({ message: "Ocorreu um erro interno no servidor." });
+    console.error('Erro ao analisar tarifa:', error);
+    res.status(500).json({ message: error instanceof Error ? error.message : 'Falha ao analisar a tarifa.' });
   }
 });
-
 
 // Start the server
 app.listen(port, () => {

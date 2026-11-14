@@ -22,3 +22,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Segredos (chave da Gemini etc.)
+.env
+backend/.env

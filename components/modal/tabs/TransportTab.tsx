@@ -6,7 +6,9 @@ import {
     generateCarRentalBookingUrl,
     generateGoogleMapsRouteUrl,
     generateFlightBookingUrl,
+    generateGoogleFlightsUrl,
 } from '../../../services/bookingService.ts';
+import { FareAnalyzer } from './FareAnalyzer.tsx';
 import { BookingIcon } from '../../icons/BookingIcon.tsx';
 import { ShareIcon } from '../../icons/ShareIcon.tsx';
 import { StopoverCitySelector } from './StopoverCitySelector.tsx';
@@ -42,11 +44,13 @@ export const TransportTab: React.FC<TransportTabProps> = ({
     selectedReturnAccommodation,
     onSelectReturnAccommodation
 }) => {
-    const { mode, priceSource, totalDistanceKm, breakdown, tollPlazaBreakdown } = trip.transportationDetails;
+    const { mode, totalDistanceKm, breakdown, tollPlazaBreakdown } = trip.transportationDetails;
     const routeWaypoints = [selectedOutboundStop?.name, selectedReturnStop?.name].filter(Boolean) as string[];
     const routeUrl = generateGoogleMapsRouteUrl({ name: trip.startLocation, coords: trip.startLocationCoords }, trip.destinationName, routeWaypoints);
     
-    const flightUrl = mode.includes('Avião') ? generateFlightBookingUrl(trip) : null;
+    const isFlight = mode.includes('Avião');
+    const flightUrl = isFlight ? generateFlightBookingUrl(trip) : null;
+    const googleFlightsUrl = isFlight ? generateGoogleFlightsUrl(trip) : null;
     const busUrl = mode.includes('Ônibus') ? generateBusBookingUrl(trip) : null;
     const carRentalUrl = mode.includes('Alugado') ? generateCarRentalBookingUrl(trip) : null;
 
@@ -65,7 +69,7 @@ export const TransportTab: React.FC<TransportTabProps> = ({
                             <span>Ver Rota</span>
                         </a>
                     </div>
-                    <p className="font-semibold text-gray-800 mt-2">Custo Total: {formatter.format(trip.transportationDetails.totalCost)}</p>
+                    <p className="font-semibold text-gray-800 mt-2">Custo Total{isFlight ? ' estimado' : ''}: {formatter.format(trip.transportationDetails.totalCost)}</p>
                     
                     {breakdown && breakdown.length > 0 ? (
                         <div className="mt-2 text-sm text-gray-700 space-y-1">
@@ -78,13 +82,12 @@ export const TransportTab: React.FC<TransportTabProps> = ({
                     )}
 
 
-                    {trip.transportationDetails.mode.includes('Avião') && trip.startDate && trip.endDate && (
-                        <p className="text-xs text-gray-500 mt-2 italic">
-                            *Valor referente ao período de <span className="font-medium">{formatDate(trip.startDate)}</span> a <span className="font-medium">{formatDate(trip.endDate)}</span>.
+                    {isFlight && (
+                        <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-2 py-1 mt-2">
+                            Estimativa feita pela IA, não é cotação
+                            {trip.startDate && trip.endDate && <> (período de <span className="font-medium">{formatDate(trip.startDate)}</span> a <span className="font-medium">{formatDate(trip.endDate)}</span>)</>}.
+                            {' '}Confira o preço real nos links abaixo.
                         </p>
-                    )}
-                    {trip.transportationDetails.priceSource && (
-                        <p className="text-sm text-gray-500 mt-1">Fonte do preço: <span className="font-semibold text-gray-700">{trip.transportationDetails.priceSource}</span></p>
                     )}
                 </div>
 
@@ -106,12 +109,20 @@ export const TransportTab: React.FC<TransportTabProps> = ({
 
 
                 <div className="pt-4 border-t border-gray-200">
-                     {mode.includes('Avião') && flightUrl && priceSource && (
+                     {isFlight && (flightUrl || googleFlightsUrl) && (
                         <div className="flex flex-wrap items-center gap-4">
-                            <a href={flightUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-blue-500 text-white font-semibold rounded-lg hover:bg-blue-600 transition-colors no-print">
-                                <BookingIcon className="w-5 h-5" />
-                                Ver oferta no {priceSource}
-                            </a>
+                            {flightUrl && (
+                                <a href={flightUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-blue-500 text-white font-semibold rounded-lg hover:bg-blue-600 transition-colors no-print">
+                                    <BookingIcon className="w-5 h-5" />
+                                    Ver preços no Skyscanner
+                                </a>
+                            )}
+                            {googleFlightsUrl && (
+                                <a href={googleFlightsUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-white border border-blue-500 text-blue-600 font-semibold rounded-lg hover:bg-blue-50 transition-colors no-print">
+                                    <BookingIcon className="w-5 h-5" />
+                                    Calendário de preços (Google Flights)
+                                </a>
+                            )}
                         </div>
                     )}
                     {busUrl && (
@@ -128,6 +139,8 @@ export const TransportTab: React.FC<TransportTabProps> = ({
                     )}
                 </div>
             </div>
+
+            {isFlight && <FareAnalyzer trip={trip} formatter={formatter} />}
 
             {trip.transportationDetails.potentialOutboundStops && trip.transportationDetails.potentialOutboundStops.length > 0 && (
                 <div className="p-4 bg-indigo-50 rounded-lg border border-indigo-200 space-y-4">

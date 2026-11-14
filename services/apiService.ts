@@ -1,5 +1,5 @@
 // src/services/apiService.ts
-import { SearchCriteria, TripPlan } from '../types.ts';
+import { SearchCriteria, TripPlan, FareAnalysis, Travelers } from '../types.ts';
 
 const BACKEND_URL = 'http://localhost:3001'; // A URL do nosso servidor backend
 
@@ -32,4 +32,23 @@ export async function checkBackendStatus(): Promise<boolean> {
     console.warn("Backend health check failed:", error);
     return false;
   }
+}
+
+export async function analyzeFare(fareText: string, travelers?: Travelers, route?: string): Promise<FareAnalysis> {
+  let response: Response;
+  try {
+    response = await fetch(`${BACKEND_URL}/api/fare-analysis`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ fareText, travelers, route }),
+    });
+  } catch (error) {
+    console.error("Erro ao chamar a análise de tarifa:", error);
+    throw new Error("Não foi possível conectar ao servidor para analisar a tarifa.");
+  }
+  if (!response.ok) {
+    const body = await response.json().catch(() => null);
+    throw new Error(body?.message || "Falha ao analisar a tarifa.");
+  }
+  return await response.json();
 }
