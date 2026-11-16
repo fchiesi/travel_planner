@@ -63,8 +63,10 @@ export interface TransportationDetails {
   potentialReturnStops?: OvernightStop[];
   originIataCode?: string; // IATA code for origin airport (e.g., GRU)
   destinationIataCode?: string; // IATA code for destination airport (e.g., SDU)
-  priceSource?: string; // ex: 'Skyscanner', 'Kayak'. Site where the price was found.
-  bookingUrl?: string; // The exact URL from the flight search page (e.g., Skyscanner, Kayak).
+  // Legado: planos antigos salvos no Firestore podem ter estes campos, que o
+  // modelo inventava. Não são mais gerados nem exibidos.
+  priceSource?: string;
+  bookingUrl?: string;
   totalDistanceKm?: number; // Total round-trip distance in km for car trips
   tollPlazaBreakdown?: { // Detailed breakdown of each toll plaza for car trips
     name: string;
@@ -126,4 +128,26 @@ export interface TripPlan {
   startLocation: string; // Added for map links
   startLocationCoords?: { lat: number; lon: number };
   favoritedAt?: any; // For sorting favorites in Firestore
+}
+// Resultado de POST /api/fare-analysis (backend/geminiService.js -> fareAnalysisSchema)
+export interface FareCharge {
+  item: string;
+  tipo: 'inevitavel' | 'provavel' | 'opcional';
+  valor?: number | null;
+  valorConstaNoTexto: boolean;
+  comoEvitar: string;
+}
+
+export interface FareAnalysis {
+  resumoTarifa: string;
+  precoAnunciado?: number | null;
+  custoTotalProvavel?: number | null;
+  moeda: string;
+  inclusos: string[];
+  cobrancasAdicionais: FareCharge[];
+  regras: { remarcacao: string; cancelamento: string; reembolso: string; noShow: string };
+  cenariosDePrejuizo: { cenario: string; perdaEstimada?: number | null; explicacao: string }[];
+  alertas: string[];
+  informacoesFaltantes: string[];
+  recomendacao: string;
 }

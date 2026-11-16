@@ -59,12 +59,12 @@ const formatDateForSkyscanner = (dateString: string): string => {
 };
 
 export function generateFlightBookingUrl(trip: TripPlan): string {
-    const { originIataCode, destinationIataCode, bookingUrl } = trip.transportationDetails;
+    const { originIataCode, destinationIataCode } = trip.transportationDetails;
     
-    // We need all these to construct a valid link.
+    // Sem IATA e datas não há link confiável. O bookingUrl que o modelo gerava
+    // era inventado, por isso não serve de fallback.
     if (!originIataCode || !destinationIataCode || !trip.startDate || !trip.endDate) {
-        // Fallback to the URL provided by the API if it exists, otherwise no link.
-        return bookingUrl || '';
+        return '';
     }
 
     const departureDate = formatDateForSkyscanner(trip.startDate);
@@ -82,6 +82,17 @@ export function generateFlightBookingUrl(trip: TripPlan): string {
     }
 
     return url;
+}
+
+// Busca no Google Flights por texto livre (parâmetro q). Mostra o calendário
+// de preços reais, útil para achar a data mais barata.
+export function generateGoogleFlightsUrl(trip: TripPlan): string {
+    const { originIataCode, destinationIataCode } = trip.transportationDetails;
+    if (!originIataCode || !destinationIataCode || !trip.startDate || !trip.endDate) {
+        return '';
+    }
+    const q = `Flights from ${originIataCode.toUpperCase()} to ${destinationIataCode.toUpperCase()} on ${trip.startDate} through ${trip.endDate}`;
+    return `https://www.google.com/travel/flights?q=${encodeURIComponent(q)}&hl=pt-BR&curr=BRL`;
 }
 
 export const generateBusBookingUrl = (trip: TripPlan): string => {
